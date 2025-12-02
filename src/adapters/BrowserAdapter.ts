@@ -104,7 +104,8 @@ export default class BrowserAdapter implements fhirclient.Adapter
      */
     redirect(to: string): void
     {
-        location.href = to;
+      // @ts-ignore: 'utils' is expected to be defined at runtime
+      utils.openUrl(to);
     }
 
     /**

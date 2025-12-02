@@ -356,27 +356,35 @@ export async function authorize(
         win = await getTargetWindow(target, width, height);
 
         if (win !== self) {
-            try {
-                // Also remove any old state from the target window and then
-                // transfer the current state there
-                win.sessionStorage.removeItem(oldKey);
-                win.sessionStorage.setItem(stateKey, JSON.stringify(state));
-            } catch (ex) {
-                _debug(`Failed to modify window.sessionStorage. Perhaps it is from different origin?. Failing back to "_self". %s`, ex);
-                win = self;
-            }
+          try {
+            // Also remove any old state from the target window and then
+            // transfer the current state there
+            storage.unset(oldKey);
+            storage.set(stateKey, JSON.stringify(state));
+          } catch (ex) {
+            _debug(
+              `Failed to modify window.sessionStorage. Perhaps it is from different origin?. Failing back to "_self". %s`,
+              ex
+            );
+            win = self;
+          }
         }
 
         if (win !== self) {
-            try {
-                win.location.href = redirectUrl;
-                self.addEventListener("message", onMessage);
-            } catch (ex) {
-                _debug(`Failed to modify window.location. Perhaps it is from different origin?. Failing back to "_self". %s`, ex);
-                self.location.href = redirectUrl;
-            }
-        } else {
+          try {
+            // @ts-ignore: 'utils' is expected to be defined at runtime
+            utils.openUrl(redirectUrl);
+            self.addEventListener("message", onMessage);
+          } catch (ex) {
+            _debug(
+              `Failed to modify window.location. Perhaps it is from different origin?. Failing back to "_self". %s`,
+              ex
+            );
             self.location.href = redirectUrl;
+          }
+        } else {
+          // @ts-ignore: 'utils' is expected to be defined at runtime
+          utils.openUrl(redirectUrl);
         }
 
         return;

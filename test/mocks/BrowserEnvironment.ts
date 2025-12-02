@@ -36,7 +36,8 @@ export default class BrowserEnvironment extends EventEmitter implements fhirclie
 
     redirect(to: string)
     {
-        window.location.href = to;
+        // @ts-ignore: 'utils' is expected to be defined at runtime
+        utils.openUrl(to);
         this.emit("redirect");
     }
 
