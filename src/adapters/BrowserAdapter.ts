@@ -93,8 +93,8 @@ export default class BrowserAdapter implements fhirclient.Adapter
     getUrl(): URL
     {
         if (!this._url) {
-          // @ts-ignore: 'url' is expected to be defined at runtime
-          this._url = new URL(url.href);
+            // @ts-ignore: 'url' is expected to be defined at runtime
+            this._url = new URL(url.href);
         }
         return this._url;
     }
@@ -105,8 +105,8 @@ export default class BrowserAdapter implements fhirclient.Adapter
      */
     redirect(to: string): void
     {
-      // @ts-ignore: 'utils' is expected to be defined at runtime
-      utils.openUrl(to, { newTab: false });
+        // @ts-ignore: 'utils' is expected to be defined at runtime
+        utils.openUrl(to, { newTab: false });
     }
 
     /**
