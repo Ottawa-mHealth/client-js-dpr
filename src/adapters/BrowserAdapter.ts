@@ -35,7 +35,7 @@ export default class BrowserAdapter implements fhirclient.Adapter
         this.options = {
             // Replaces the browser's current URL
             // using window.history.replaceState API or by reloading.
-            replaceBrowserHistory: true,
+            replaceBrowserHistory: false,
 
             // When set to true, this variable will fully utilize
             // HTML5 sessionStorage API.
@@ -93,7 +93,8 @@ export default class BrowserAdapter implements fhirclient.Adapter
     getUrl(): URL
     {
         if (!this._url) {
-            this._url = new URL(location + "");
+          // @ts-ignore: 'url' is expected to be defined at runtime
+          this._url = new URL(url.href);
         }
         return this._url;
     }
@@ -105,7 +106,7 @@ export default class BrowserAdapter implements fhirclient.Adapter
     redirect(to: string): void
     {
       // @ts-ignore: 'utils' is expected to be defined at runtime
-      utils.openUrl(to);
+      utils.openUrl(to, { newTab: false });
     }
 
     /**

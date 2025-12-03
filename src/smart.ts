@@ -225,27 +225,27 @@ export async function authorize(
     }
 
     if (isBrowser()) {
-        const inFrame = isInFrame();
-        const inPopUp = isInPopUp();
+      const inFrame = isInFrame();
+      const inPopUp = isInPopUp();
 
         if ((inFrame || inPopUp) && completeInTarget !== true && completeInTarget !== false) {
             
-            // completeInTarget will default to true if authorize is called from
-            // within an iframe. This is to avoid issues when the entire app
-            // happens to be rendered in an iframe (including in some EHRs),
-            // even though that was not how the app developer's intention.
-            completeInTarget = inFrame;
+        // completeInTarget will default to true if authorize is called from
+        // within an iframe. This is to avoid issues when the entire app
+        // happens to be rendered in an iframe (including in some EHRs),
+        // even though that was not how the app developer's intention.
+        completeInTarget = inFrame;
 
-            // In this case we can't always make the best decision so ask devs
-            // to be explicit in their configuration.
-            console.warn(
+        // In this case we can't always make the best decision so ask devs
+        // to be explicit in their configuration.
+        console.warn(
                 'Your app is being authorized from within an iframe or popup ' +
-                'window. Please be explicit and provide a "completeInTarget" ' +
+            'window. Please be explicit and provide a "completeInTarget" ' +
                 'option. Use "true" to complete the authorization in the '     +
-                'same window, or "false" to try to complete it in the parent ' +
+            'same window, or "false" to try to complete it in the parent ' +
                 'or the opener window. See http://docs.smarthealthit.org/client-js/api.html'
-            );
-        }
+        );
+      }
     }
 
     // If `authorize` is called, make sure we clear any previous state (in case
@@ -257,15 +257,15 @@ export async function authorize(
 
     // Create initial state
     const state: fhirclient.ClientState = {
-        clientId,
-        scope,
-        redirectUri,
-        serverUrl,
-        clientSecret,
-        clientPrivateJwk,
-        tokenResponse: {},
-        key: stateKey,
-        completeInTarget,
+      clientId,
+      scope,
+      redirectUri,
+      serverUrl,
+      clientSecret,
+      clientPrivateJwk,
+      tokenResponse: {},
+      key: stateKey,
+      completeInTarget,
         clientPublicKeySetUrl
     };
 
@@ -274,87 +274,87 @@ export async function authorize(
         true;
 
     if (fullSessionStorageSupport) {
-        await storage.set(SMART_KEY, stateKey);
+      await storage.set(SMART_KEY, stateKey);
     }
 
     // fakeTokenResponse to override stuff (useful in development)
     if (fakeTokenResponse) {
-        Object.assign(state.tokenResponse!, fakeTokenResponse);
+      Object.assign(state.tokenResponse!, fakeTokenResponse);
     }
 
     // Fixed patientId (useful in development)
     if (patientId) {
-        Object.assign(state.tokenResponse!, { patient: patientId });
+      Object.assign(state.tokenResponse!, { patient: patientId });
     }
 
     // Fixed encounterId (useful in development)
     if (encounterId) {
-        Object.assign(state.tokenResponse!, { encounter: encounterId });
+      Object.assign(state.tokenResponse!, { encounter: encounterId });
     }
 
     let redirectUrl = redirectUri + "?state=" + encodeURIComponent(stateKey);
 
     // bypass oauth if fhirServiceUrl is used (but iss takes precedence)
     if (fhirServiceUrl && !iss) {
-        debug("Making fake launch...");
-        await storage.set(stateKey, state);
-        if (noRedirect) {
-            return redirectUrl;
-        }
-        return await env.redirect(redirectUrl);
+      debug("Making fake launch...");
+      await storage.set(stateKey, state);
+      if (noRedirect) {
+        return redirectUrl;
+      }
+      return await env.redirect(redirectUrl);
     }
 
     // Get oauth endpoints and add them to the state
     const extensions = await getSecurityExtensions(
-        serverUrl,
-        params.wellKnownRequestOptions,
-        params.conformanceRequestOptions
+      serverUrl,
+      params.wellKnownRequestOptions,
+      params.conformanceRequestOptions
     );
     Object.assign(state, extensions);
     await storage.set(stateKey, state);
 
     // If this happens to be an open server and there is no authorizeUri
     if (!state.authorizeUri) {
-        if (noRedirect) {
-            return redirectUrl;
-        }
-        return await env.redirect(redirectUrl);
+      if (noRedirect) {
+        return redirectUrl;
+      }
+      return await env.redirect(redirectUrl);
     }
 
     // build the redirect uri
     const redirectParams = [
-        "response_type=code",
+      "response_type=code",
         "client_id="    + encodeURIComponent(clientId || ""),
         "scope="        + encodeURIComponent(scope),
-        "redirect_uri=" + encodeURIComponent(redirectUri),
+      "redirect_uri=" + encodeURIComponent(redirectUri),
         "aud="          + encodeURIComponent(serverUrl),
         "state="        + encodeURIComponent(stateKey)
     ];
 
     // also pass this in case of EHR launch
     if (launch) {
-        redirectParams.push("launch=" + encodeURIComponent(launch));
+      redirectParams.push("launch=" + encodeURIComponent(launch));
     }
 
     if (shouldIncludeChallenge(extensions.codeChallengeMethods.includes('S256'), pkceMode)) {
         let codes = await env.security.generatePKCEChallenge()
-        Object.assign(state, codes);
-        await storage.set(stateKey, state);
+      Object.assign(state, codes);
+      await storage.set(stateKey, state);
         redirectParams.push("code_challenge=" + state.codeChallenge);// note that the challenge is ALREADY encoded properly
-        redirectParams.push("code_challenge_method=S256");
+      redirectParams.push("code_challenge_method=S256");
     }
-  
+
     redirectUrl = state.authorizeUri + "?" + redirectParams.join("&");
 
     if (noRedirect) {
-        return redirectUrl;
+      return redirectUrl;
     }
 
     if (target && isBrowser()) {
         let win: Window;
-
+        
         win = await getTargetWindow(target, width, height);
-
+        
         if (win !== self) {
           try {
             // Also remove any old state from the target window and then
@@ -370,21 +370,17 @@ export async function authorize(
           }
         }
 
-        if (win !== self) {
-          try {
+        try {
             // @ts-ignore: 'utils' is expected to be defined at runtime
-            utils.openUrl(redirectUrl);
+            utils.openUrl(redirectUrl, { newTab: true });
             self.addEventListener("message", onMessage);
-          } catch (ex) {
+        } catch (ex) {
             _debug(
-              `Failed to modify window.location. Perhaps it is from different origin?. Failing back to "_self". %s`,
-              ex
+                `Failed to modify window.location. Perhaps it is from different origin?. Failing back to "_self". %s`,
+                ex
             );
-            self.location.href = redirectUrl;
-          }
-        } else {
-          // @ts-ignore: 'utils' is expected to be defined at runtime
-          utils.openUrl(redirectUrl);
+            // @ts-ignore: 'utils' is expected to be defined at runtime
+            utils.openUrl(redirectUrl, { newTab: false });
         }
 
         return;
@@ -448,9 +444,12 @@ export function isInPopUp() {
  * @param e The message event
  */
 export function onMessage(e: MessageEvent) {
-    if (e.data.type == "completeAuth" && e.origin === new URL(self.location.href).origin) {
+    console.log("Received message event: ", e);
+    // @ts-ignore: 'url' is expected to be defined at runtime
+    if (e.data.type == "completeAuth" && e.origin === new URL(url.href).origin) {
         window.removeEventListener("message", onMessage);
-        window.location.href = e.data.url;
+        // @ts-ignore: 'utils' is expected to be defined at runtime
+        utils.openUrl(e.data.url, { newTab: false });
     }
 }
 
@@ -505,7 +504,7 @@ export async function ready(env: fhirclient.Adapter, options: fhirclient.ReadyOp
 
     // If we are in a popup window or an iframe and the authorization is
     // complete, send the location back to our opener and exit.
-    if (isBrowser() && state && !state.completeInTarget) {
+    if (isBrowser() && !state?.completeInTarget) {
 
         const inFrame = isInFrame();
         const inPopUp = isInPopUp();
@@ -516,11 +515,15 @@ export async function ready(env: fhirclient.Adapter, options: fhirclient.ReadyOp
         // have to stop going up the chain. To guard against that weird form of
         // recursion we pass one additional parameter to the url which we later
         // remove.
+        console.log("inFrame:", inFrame, "inPopUp:", inPopUp);
         if ((inFrame || inPopUp) && !url.searchParams.get("complete")) {
             url.searchParams.set("complete", "1");
             const { href, origin } = url;
+            console.log("Notifying parent/opener about completed auth:", { href, origin });
+            console.log("parent:", parent, "opener:", opener);
             if (inFrame) {
                 parent.postMessage({ type: "completeAuth", url: href }, origin);
+                // window.close();
             }
             if (inPopUp) {
                 opener.postMessage({ type: "completeAuth", url: href }, origin);
