@@ -6,7 +6,7 @@ export default class Storage
    */
   async get(key: string): Promise<any>
   {
-    const value = this.retoolVariable().value[key];
+        const value = localStorage.values[key];
     if (value) {
       return JSON.parse(value);
     }
@@ -19,10 +19,7 @@ export default class Storage
    */
   async set(key: string, value: any): Promise<any>
   {
-    const currentVal = await this.get(key);
-    this.retoolVariable().setValue(
-      JSON.stringify({ ...currentVal, [key]: value })
-    );
+        localStorage.setValue(key, JSON.stringify(value));
     return value;
   }
 
@@ -33,11 +30,8 @@ export default class Storage
    */
   async unset(key: string): Promise<boolean>
   {
-    const currentVal = await this.get(key);
-    if (currentVal) {
-      this.retoolVariable().setValue(
-        currentVal.filter((k: string) => k !== key)
-      );
+    if (await this.get(key)) {
+      localStorage.setValue(key, null);
       return true;
     }
     return false;

@@ -370,6 +370,7 @@ export async function authorize(
           }
         }
 
+        if (win !== self) {
         try {
             // @ts-ignore: 'utils' is expected to be defined at runtime
             utils.openUrl(redirectUrl, { newTab: true });
@@ -379,6 +380,10 @@ export async function authorize(
                 `Failed to modify window.location. Perhaps it is from different origin?. Failing back to "_self". %s`,
                 ex
             );
+            // @ts-ignore: 'utils' is expected to be defined at runtime
+            utils.openUrl(redirectUrl, { newTab: false });
+          }
+        } else {
             // @ts-ignore: 'utils' is expected to be defined at runtime
             utils.openUrl(redirectUrl, { newTab: false });
         }
@@ -504,7 +509,7 @@ export async function ready(env: fhirclient.Adapter, options: fhirclient.ReadyOp
 
     // If we are in a popup window or an iframe and the authorization is
     // complete, send the location back to our opener and exit.
-    if (isBrowser() && !state?.completeInTarget) {
+    if (isBrowser() && state && !state.completeInTarget) {
 
         const inFrame = isInFrame();
         const inPopUp = isInPopUp();
@@ -515,12 +520,9 @@ export async function ready(env: fhirclient.Adapter, options: fhirclient.ReadyOp
         // have to stop going up the chain. To guard against that weird form of
         // recursion we pass one additional parameter to the url which we later
         // remove.
-        console.log("inFrame:", inFrame, "inPopUp:", inPopUp);
         if ((inFrame || inPopUp) && !url.searchParams.get("complete")) {
             url.searchParams.set("complete", "1");
             const { href, origin } = url;
-            console.log("Notifying parent/opener about completed auth:", { href, origin });
-            console.log("parent:", parent, "opener:", opener);
             if (inFrame) {
                 parent.postMessage({ type: "completeAuth", url: href }, origin);
                 // window.close();
